@@ -1,15 +1,14 @@
-﻿namespace GoalboundGenerator
+﻿namespace GoalboundGenerator;
+
+public enum Direction
 {
-    public enum Direction
-    {
-        NotSet,
-        North,
-        NorthEast,
-        East,
-        SouthEast,
-        South,
-        SouthWest,
-        West,
-        NorthWest
-    }
+    NotSet,
+    North,
+    NorthEast,
+    East,
+    SouthEast,
+    South,
+    SouthWest,
+    West,
+    NorthWest
 }

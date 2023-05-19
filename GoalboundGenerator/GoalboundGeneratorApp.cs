@@ -8,7 +8,7 @@ using System.Drawing;
 
 namespace GoalboundGenerator;
 
-public static class GoalboundGenerator
+public static class GoalboundGeneratorApp
 {
     private const int MAXIMUM_SIZE = 4;
     private const string IN_MAP_FILE = "../../../../ShootEmUp/Resources/Levels/Level1.png";
@@ -25,12 +25,12 @@ public static class GoalboundGenerator
     private const int PATH_COLOR = -1055568;
 
     private static Map map = new(0, 0);
-    private static ConcurrentDictionary<int, GoalboundingTile[,]> workingGoalboundingMaps = new();
+    private static readonly ConcurrentDictionary<int, GoalboundingTile[,]> workingGoalboundingMaps = new();
 
     private static int mapWidth;
     private static int mapHeight;
 
-    public static async Task Main(string[] args)
+    public static async Task Main()
     {
         LoadMap();
 
@@ -41,7 +41,7 @@ public static class GoalboundGenerator
 
         CreateGoalBoundingBoxes();
 
-        await SaveGoalbounder();
+        await SaveGoalbounder().ConfigureAwait(false);
     }
 
     private static async Task SaveGoalbounder()
@@ -53,14 +53,14 @@ public static class GoalboundGenerator
             goalboundingMaps[bound.Key] = bound.Value;
         }
 
-        GoalBounder goalbounder = new GoalBounder(goalboundingMaps);
+        var goalbounder = new GoalBounder(goalboundingMaps);
 
         try
         {
             using var compressor = new BrotliCompressor();
             MemoryPackSerializer.Serialize(compressor, goalbounder);
-            var bytes = compressor.ToArray();
-            await File.WriteAllBytesAsync(OUT_MAP_FILE, bytes);
+            byte[] bytes = compressor.ToArray();
+            await File.WriteAllBytesAsync(OUT_MAP_FILE, bytes).ConfigureAwait(false);
         }
         catch (IOException i)
         {
@@ -70,7 +70,7 @@ public static class GoalboundGenerator
 
     private static void LoadMap()
     {
-        using FileStream pngStream = new FileStream(IN_MAP_FILE, FileMode.Open, FileAccess.Read);
+        using var pngStream = new FileStream(IN_MAP_FILE, FileMode.Open, FileAccess.Read);
         using var image = SKBitmap.Decode(pngStream);
 
         mapWidth = image.Width;
@@ -104,7 +104,6 @@ public static class GoalboundGenerator
 
     private static void CreateGoalBoundingBoxes()
     {
-
         for (int size = 1; size <= MAXIMUM_SIZE; size++)
         {
             _ = Parallel.For<(Queue<DirectionNode> Open, HashSet<Point> Closed)>(0, mapWidth, () =>
@@ -116,7 +115,7 @@ public static class GoalboundGenerator
                 HashSet<Point> closed = new(mapWidth * mapHeight);
 
                 return (open, closed);
-            }, (x, loop, local) =>
+            }, (x, _, local) =>
             {
                 for (int y = 0; y < mapHeight; y++)
                 {
@@ -125,6 +124,7 @@ public static class GoalboundGenerator
 
                     CreateGoalBoundingBox(size, x, y, local.Open, local.Closed);
                 }
+
                 Console.WriteLine($"size:{size}, row:{x} - Completed");
 
                 return local;
@@ -141,7 +141,7 @@ public static class GoalboundGenerator
         {
             AddChildNodes(open, closed, start, size);
 
-            Dictionary<Direction, WorkingBoundingBox> workingBoxes = InitBoundingBoxes(open);
+            var workingBoxes = InitBoundingBoxes(open);
 
             FillMap(open, closed, size, workingBoxes);
 
@@ -160,7 +160,7 @@ public static class GoalboundGenerator
         int startX = startNode.Point.X;
         int startY = startNode.Point.Y;
 
-        var first = (startNode.Direction == Direction.NotSet);
+        bool first = startNode.Direction == Direction.NotSet;
 
         var north = map.GetPoint(startX, startY - 1, first ? Direction.North : startNode.Direction);
         AddNode(open, closed, size, north);
@@ -179,7 +179,6 @@ public static class GoalboundGenerator
 
         var southWest = map.GetPoint(startX - 1, startY + 1, first ? Direction.SouthWest : startNode.Direction);
         AddNode(open, closed, size, southWest);
-
 
         var southEast = map.GetPoint(startX + 1, startY + 1, first ? Direction.SouthEast : startNode.Direction);
         AddNode(open, closed, size, southEast);
@@ -205,6 +204,7 @@ public static class GoalboundGenerator
         {
             boxes[node.Direction] = new WorkingBoundingBox(node.Point.X, node.Point.Y);
         }
+
         return boxes;
     }
 

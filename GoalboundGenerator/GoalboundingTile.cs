@@ -1,20 +1,17 @@
 ﻿using MemoryPack;
 
-namespace GoalboundGenerator
+namespace GoalboundGenerator;
+
+[MemoryPackable]
+public partial class GoalboundingTile
 {
-    [MemoryPackable]
-    public partial class GoalboundingTile
+    [MemoryPackInclude]
+    private readonly Dictionary<Direction, BoundingBox> boxes;
+
+    public GoalboundingTile(Dictionary<Direction, BoundingBox> boxes)
     {
-        public readonly Dictionary<Direction, BoundingBox> boxes;
-
-        public GoalboundingTile(Dictionary<Direction, BoundingBox> boxes)
-        {
-            this.boxes = boxes;
-        }
-
-        public BoundingBox GetBoundingBox(Direction direction)
-        {
-            return boxes[direction];
-        }
+        this.boxes = boxes;
     }
+
+    public BoundingBox GetBoundingBox(Direction direction) => boxes[direction];
 }
