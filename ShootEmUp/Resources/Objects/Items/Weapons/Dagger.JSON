@@ -1,0 +1,22 @@
+[
+{
+  "name": "SteelDagger",
+  "damage": 3,
+  "range": 1,
+  "fireRate": 5,
+  "melee": true,
+  "manaCost": 1,
+  "particleImage": "SwordProjectile",
+  "element": null
+},
+{
+  "name": "IronDagger",
+  "damage": 3,
+  "range": 1,
+  "fireRate": 3,
+  "melee": true,
+  "manaCost": 1,
+  "particleImage": "SwordProjectile",
+  "element": null
+}
+]

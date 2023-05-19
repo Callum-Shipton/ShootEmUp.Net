@@ -1,0 +1,68 @@
+[
+{
+  "name": "Warrior",
+  "components":[
+  {
+  	"class":"attack.PlayerAttack",
+  	"component":
+  		{
+  		"maxHealth": 5,
+  		"maxMana": 3,
+  		"weaponId": "Greatsword",
+  		"team": 1,
+  		"helmetId": null,
+  		"chestId": null,
+  		"legsId": null,
+  		"bootsId": null
+  		}
+  },
+  {
+  	"class":"graphical.PlayerGraphics",
+  	"component":
+  		{
+  		"imageId": "Warrior"
+ 		}
+  },
+  {
+  	"class":"movement.GroundMovement",
+  	"component":
+  		{
+  		"speed": 5
+ 		}
+  },
+  {
+  	"class":"collision.RigidCollision",
+  	"component":
+  		{
+ 		}
+ 	},
+ 	{
+  	"class":"inventory.BaseInventory",
+  	"component":
+  		{
+ 		}
+  },
+  {
+  	"class":"spawn.PointSpawn",
+  	"component":
+  		{
+ 		}
+  },
+  {
+  	"class":"control.PlayerControl",
+  	"component":
+  		{
+ 		}
+  },
+  {
+  	"class":"audio.EventAudio",
+  	"component":
+  		{
+  		"sounds": {
+  			"SHOOT":"Shoot.ogg"
+ 			}
+ 		}
+  }
+  ]
+}
+]

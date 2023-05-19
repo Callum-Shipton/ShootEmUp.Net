@@ -1,0 +1,242 @@
+[
+{
+  "name": "Small",
+  "components":[
+  {
+  	"class":"attack.EnemyAttack",
+  	"component":
+  		{
+  		"maxHealth": 1,
+  		"maxMana": 5,
+  		"weaponId": "OneHanded",
+  		"helmetId": "Helmet",
+  		"chestId": null,
+  		"legsId": null,
+  		"bootsId": null,
+  		"team": 0
+  		}
+  },
+  {
+  	"class":"graphical.AnimatedGraphics",
+  	"component":
+  		{
+  		"imageId": "SmallEnemy"
+ 		}
+  },
+  {
+  	"class":"movement.GroundMovement",
+  	"component":
+  		{
+  		"speed": 7
+ 		}
+  },
+  {
+  	"class":"collision.RigidCollision",
+  	"component":
+  		{
+ 		}
+ 	},
+ 	{
+  	"class":"inventory.BaseInventory",
+  	"component":
+  		{
+ 		}
+  },
+  {
+  	"class":"control.AIControl",
+  	"component":
+  		{
+ 		}
+  },
+  {
+  	"class":"audio.EventAudio",
+  	"component":
+  		{
+  		"sounds": {
+  			"SHOOT":"Shoot.ogg"
+ 			}
+ 		}
+  }
+  ]
+},
+{
+  "name": "Normal",
+  "components":[
+  {
+  	"class":"attack.EnemyAttack",
+  	"component":
+  		{
+  		"maxHealth": 3,
+  		"maxMana": 5,
+  		"weaponId": "Bow",
+  		"helmetId": null,
+  		"chestId": "Chest",
+  		"legsId": null,
+  		"bootsId": null,
+  		"team": 0
+  		}
+  },
+  {
+  	"class":"graphical.AnimatedGraphics",
+  	"component":
+  		{
+  		"imageId": "Enemy"
+ 		}
+  },
+  {
+  	"class":"movement.GroundMovement",
+  	"component":
+  		{
+  		"speed": 4
+ 		}
+  },
+  {
+  	"class":"collision.RigidCollision",
+  	"component":
+  		{
+ 		}
+ 	},
+ 	{
+  	"class":"inventory.BaseInventory",
+  	"component":
+  		{
+ 		}
+  },
+  {
+  	"class":"control.AIControl",
+  	"component":
+  		{
+ 		}
+  },
+  {
+  	"class":"audio.EventAudio",
+  	"component":
+  		{
+  		"sounds": {
+  			"SHOOT":"Shoot.ogg"
+ 			}
+ 		}
+  }
+  ]
+},
+{
+  "name": "Flying",
+  "components":[
+  {
+  	"class":"attack.EnemyAttack",
+  	"component":
+  		{
+  		"maxHealth": 2,
+  		"maxMana": 5,
+  		"weaponId": "Staff",
+  		"helmetId": null,
+  		"chestId": null,
+  		"legsId": "Legs",
+  		"bootsId": null,
+  		"team": 0
+  		}
+  },
+  {
+  	"class":"graphical.AnimatedGraphics",
+  	"component":
+  		{
+  		"imageId": "FlyingEnemy"
+ 		}
+  },
+  {
+  	"class":"movement.GroundMovement",
+  	"component":
+  		{
+  		"speed": 5
+ 		}
+  },
+  {
+  	"class":"collision.RigidCollision",
+  	"component":
+  		{
+ 		}
+ 	},
+ 	{
+  	"class":"inventory.BaseInventory",
+  	"component":
+  		{
+ 		}
+  },
+  {
+  	"class":"control.AIControl",
+  	"component":
+  		{
+ 		}
+  },
+  {
+  	"class":"audio.EventAudio",
+  	"component":
+  		{
+  		"sounds": {
+  			"SHOOT":"Shoot.ogg"
+ 			}
+ 		}
+  }
+  ]
+},
+{
+  "name": "Boss",
+  "components":[
+  {
+  	"class":"attack.EnemyAttack",
+  	"component":
+  		{
+  		"maxHealth": 1,
+  		"maxMana": 5,
+  		"weaponId": "TwoHanded",
+  		"helmetId": null,
+  		"chestId": null,
+  		"legsId": null,
+  		"bootsId": "Boots",
+  		"team": 0
+  		}
+  },
+  {
+  	"class":"graphical.AnimatedGraphics",
+  	"component":
+  		{
+  		"imageId": "BossEnemy"
+ 		}
+  },
+  {
+  	"class":"movement.GroundMovement",
+  	"component":
+  		{
+  		"speed": 5
+ 		}
+  },
+  {
+  	"class":"collision.RigidCollision",
+  	"component":
+  		{
+ 		}
+ 	},
+ 	{
+  	"class":"inventory.BaseInventory",
+  	"component":
+  		{
+ 		}
+  },
+  {
+  	"class":"control.AIControl",
+  	"component":
+  		{
+ 		}
+  },
+  {
+  	"class":"audio.EventAudio",
+  	"component":
+  		{
+  		"sounds": {
+  			"SHOOT":"Shoot.ogg"
+ 			}
+ 		}
+  }
+  ]
+}
+]
