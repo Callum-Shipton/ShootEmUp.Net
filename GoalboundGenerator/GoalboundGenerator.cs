@@ -4,6 +4,7 @@ using MemoryPack.Compression;
 using SkiaSharp;
 
 using System.Collections.Concurrent;
+using System.Drawing;
 
 namespace GoalboundGenerator;
 
@@ -23,7 +24,7 @@ public static class GoalboundGenerator
     private const int GRASS_COLOR = -4856291;
     private const int PATH_COLOR = -1055568;
 
-    private static HashSet<(int, int)> walls = new();
+    private static Map map = new(0, 0);
     private static ConcurrentDictionary<int, GoalboundingTile[,]> workingGoalboundingMaps = new();
 
     private static int mapWidth;
@@ -74,6 +75,7 @@ public static class GoalboundGenerator
 
         mapWidth = image.Width;
         mapHeight = image.Height;
+        map = new Map(mapWidth, mapHeight);
 
         for (int y = 0; y < image.Height; y++)
         {
@@ -87,7 +89,7 @@ public static class GoalboundGenerator
                     case LIGHTWATER_COLOR:
                     case DARKWATER_COLOR:
                     case TRANSPORT_COLOR:
-                        walls.Add((x, y));
+                        map.AddWall(x, y);
                         break;
                     case GRASS_COLOR:
                     case PATH_COLOR:
@@ -102,44 +104,48 @@ public static class GoalboundGenerator
 
     private static void CreateGoalBoundingBoxes()
     {
+
         for (int size = 1; size <= MAXIMUM_SIZE; size++)
         {
-            Parallel.For(0, mapWidth, (x) =>
+            _ = Parallel.For<(Queue<DirectionNode> Open, HashSet<Point> Closed)>(0, mapWidth, () =>
+            {
+                // queue for tiles to be looked at
+                Queue<DirectionNode> open = new(mapWidth * mapHeight);
+
+                // list of already viewed tiles
+                HashSet<Point> closed = new(mapWidth * mapHeight);
+
+                return (open, closed);
+            }, (x, loop, local) =>
             {
                 for (int y = 0; y < mapHeight; y++)
                 {
-                    CreateGoalBoundingBox(size, x, y);
+                    local.Open.Clear();
+                    local.Closed.Clear();
+
+                    CreateGoalBoundingBox(size, x, y, local.Open, local.Closed);
                 }
                 Console.WriteLine($"size:{size}, row:{x} - Completed");
-            });
+
+                return local;
+            }, (_) => { }
+            );
         }
     }
 
-    private static void CreateGoalBoundingBox(int size, int x, int y)
+    private static void CreateGoalBoundingBox(int size, int x, int y, Queue<DirectionNode> open, HashSet<Point> closed)
     {
-        DirectionNode start = new(x, y, size, null);
+        var start = map.GetPoint(x, y, Direction.NotSet);
 
-        if (!start.ContainsWall(walls))
+        if (!map.IsWall(x, y))
         {
-            // queue for tiles to be looked at
-            Queue<DirectionNode> open = new();
+            AddChildNodes(open, closed, start, size);
 
-            // list of already viewed tiles
-            HashSet<DirectionNode> closed = new();
+            Dictionary<Direction, WorkingBoundingBox> workingBoxes = InitBoundingBoxes(open);
 
-            List<DirectionNode> startingNodes = GenerateChildNodes(start);
+            FillMap(open, closed, size, workingBoxes);
 
-            foreach (var node in startingNodes)
-            {
-                open.Enqueue(node);
-                closed.Add(node);
-            }
-
-            Dictionary<Direction, WorkingBoundingBox> workingBoxes = InitBoundingBoxes(startingNodes);
-
-            FillMap(open, closed, workingBoxes);
-
-            Dictionary<Direction, BoundingBox> boxes = new();
+            Dictionary<Direction, BoundingBox> boxes = new(8);
             foreach (var box in workingBoxes)
             {
                 boxes[box.Key] = box.Value;
@@ -149,98 +155,68 @@ public static class GoalboundGenerator
         }
     }
 
-    private static List<DirectionNode> GenerateChildNodes(DirectionNode startNode)
+    private static void AddChildNodes(Queue<DirectionNode> open, ICollection<Point> closed, DirectionNode startNode, int size)
     {
-        List<DirectionNode> childNodes = new();
+        int startX = startNode.Point.X;
+        int startY = startNode.Point.Y;
 
-        int startX = startNode.X;
-        int startY = startNode.Y;
-        int size = startNode.Size;
+        var first = (startNode.Direction == Direction.NotSet);
 
-        DirectionNode north = new DirectionNode(startX, startY - 1, size, startNode.Direction ?? Direction.North);
-        if (!north.MovesIntoWall(walls, Direction.North))
+        var north = map.GetPoint(startX, startY - 1, first ? Direction.North : startNode.Direction);
+        AddNode(open, closed, size, north);
+
+        var west = map.GetPoint(startX - 1, startY, first ? Direction.West : startNode.Direction);
+        AddNode(open, closed, size, west);
+
+        var south = map.GetPoint(startX, startY + 1, first ? Direction.South : startNode.Direction);
+        AddNode(open, closed, size, south);
+
+        var east = map.GetPoint(startX + 1, startY, first ? Direction.East : startNode.Direction);
+        AddNode(open, closed, size, east);
+
+        var northWest = map.GetPoint(startX - 1, startY - 1, first ? Direction.NorthWest : startNode.Direction);
+        AddNode(open, closed, size, northWest);
+
+        var southWest = map.GetPoint(startX - 1, startY + 1, first ? Direction.SouthWest : startNode.Direction);
+        AddNode(open, closed, size, southWest);
+
+
+        var southEast = map.GetPoint(startX + 1, startY + 1, first ? Direction.SouthEast : startNode.Direction);
+        AddNode(open, closed, size, southEast);
+
+        var northEast = map.GetPoint(startX + 1, startY - 1, first ? Direction.NorthEast : startNode.Direction);
+        AddNode(open, closed, size, northEast);
+
+        static void AddNode(Queue<DirectionNode> open, ICollection<Point> closed, int size, DirectionNode northEast)
         {
-            childNodes.Add(north);
+            if (!closed.Contains(northEast.Point) && !map.MovesIntoWall(northEast.Point.X, northEast.Point.Y, size, northEast.Direction))
+            {
+                open.Enqueue(northEast);
+                closed.Add(northEast.Point);
+            }
         }
-
-        DirectionNode west = new DirectionNode(startX - 1, startY, size, startNode.Direction ?? Direction.West);
-        if (!west.MovesIntoWall(walls, Direction.West))
-        {
-            childNodes.Add(west);
-        }
-
-        DirectionNode south = new DirectionNode(startX, startY + 1, size, startNode.Direction ?? Direction.South);
-        if (!south.MovesIntoWall(walls, Direction.South))
-        {
-            childNodes.Add(south);
-        }
-
-        DirectionNode east = new DirectionNode(startX + 1, startY, size, startNode.Direction ?? Direction.East);
-        if (!east.MovesIntoWall(walls, Direction.East))
-        {
-            childNodes.Add(east);
-        }
-
-        DirectionNode northWest = new DirectionNode(startX - 1, startY - 1, size, startNode.Direction ?? Direction.NorthWest);
-        if (!northWest.MovesIntoWall(walls, Direction.NorthWest))
-        {
-            childNodes.Add(northWest);
-        }
-
-        DirectionNode southWest = new DirectionNode(startX - 1, startY + 1, size, startNode.Direction ?? Direction.SouthWest);
-        if (!southWest.MovesIntoWall(walls, Direction.SouthWest))
-        {
-            childNodes.Add(southWest);
-        }
-
-        DirectionNode southEast = new DirectionNode(startX + 1, startY + 1, size, startNode.Direction ?? Direction.SouthEast);
-        if (!southEast.MovesIntoWall(walls, Direction.SouthEast))
-        {
-            childNodes.Add(southEast);
-        }
-
-        DirectionNode northEast = new DirectionNode(startX + 1, startY - 1, size, startNode.Direction ?? Direction.NorthEast);
-        if (!northEast.MovesIntoWall(walls, Direction.NorthEast))
-        {
-            childNodes.Add(northEast);
-        }
-
-        return childNodes;
     }
 
     private static Dictionary<Direction, WorkingBoundingBox> InitBoundingBoxes(IEnumerable<DirectionNode> startingNodes)
     {
-        Dictionary<Direction, WorkingBoundingBox> boxes = new();
+        Dictionary<Direction, WorkingBoundingBox> boxes = new(8);
 
         foreach (var node in startingNodes)
         {
-#pragma warning disable CS8629 // Nullable value type may be null.
-            boxes[node.Direction.Value] = new WorkingBoundingBox(node.X, node.Y);
-#pragma warning restore CS8629 // Nullable value type may be null.
+            boxes[node.Direction] = new WorkingBoundingBox(node.Point.X, node.Point.Y);
         }
         return boxes;
     }
 
-    private static void FillMap(Queue<DirectionNode> open, ICollection<DirectionNode> closed, Dictionary<Direction, WorkingBoundingBox> boxes)
+    private static void FillMap(Queue<DirectionNode> open, ICollection<Point> closed, int size, Dictionary<Direction, WorkingBoundingBox> boxes)
     {
         while (open.Any())
         {
             var node = open.Dequeue();
 
-#pragma warning disable CS8629 // Nullable value type may be null.
-            boxes[node.Direction.Value].ExpandBoxToFitPoint(node.X, node.Y);
-#pragma warning restore CS8629 // Nullable value type may be null.
+            boxes[node.Direction].ExpandBoxToFitPoint(node.Point.X, node.Point.Y);
 
-            List<DirectionNode> childNodes = GenerateChildNodes(node);
-
-            foreach (var child in childNodes)
-            {
-                if (!closed.Contains(child))
-                {
-                    open.Enqueue(child);
-                    closed.Add(child);
-                }
-            }
+            AddChildNodes(open, closed, node, size);
         }
     }
 }
